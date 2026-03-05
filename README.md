@@ -51,9 +51,6 @@ expireex
 
 1. Clone the repository
 
-git clone https://github.com/YOUR-USERNAME/expireex-main.git
-
-
 2. Install dependencies
 
 npm install
