@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    /* Core palette - green sustainability theme */
+    --background: 120 20% 98%;
+    --foreground: 150 25% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 25% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 25% 8%;
+
+    /* Primary - vibrant eco green */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 142 76% 92%;
+    --primary-glow: 142 60% 50%;
+
+    /* Secondary - warm amber */
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 38 80% 10%;
+    --secondary-light: 38 92% 93%;
+
+    /* Danger/expiry urgency */
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+    --danger-light: 0 84% 95%;
+
+    --muted: 150 15% 94%;
+    --muted-foreground: 150 10% 45%;
+
+    --accent: 160 60% 88%;
+    --accent-foreground: 142 76% 20%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 150 20% 88%;
+    --input: 150 20% 88%;
+    --ring: 142 76% 36%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 150 30% 12%;
+    --sidebar-foreground: 150 20% 90%;
+    --sidebar-primary: 142 76% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 25% 18%;
+    --sidebar-accent-foreground: 150 20% 90%;
+    --sidebar-border: 150 20% 20%;
+    --sidebar-ring: 142 76% 50%;
+
+    /* Custom tokens */
+    --gradient-hero: linear-gradient(135deg, hsl(142 76% 28%) 0%, hsl(160 70% 40%) 50%, hsl(180 60% 35%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(0 0% 100%) 0%, hsl(142 20% 97%) 100%);
+    --gradient-badge-urgent: linear-gradient(90deg, hsl(0 84% 60%), hsl(20 90% 55%));
+    --gradient-badge-moderate: linear-gradient(90deg, hsl(38 92% 50%), hsl(45 95% 55%));
+    --gradient-badge-safe: linear-gradient(90deg, hsl(142 76% 36%), hsl(160 70% 42%));
+    --shadow-card: 0 4px 24px -8px hsl(142 76% 36% / 0.15);
+    --shadow-card-hover: 0 12px 40px -8px hsl(142 76% 36% / 0.25);
+    --shadow-primary: 0 8px 24px -6px hsl(142 76% 36% / 0.4);
+
+    /* Font families */
+    --font-display: 'Sora', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .dark {
+    --background: 150 25% 6%;
+    --foreground: 150 20% 95%;
+    --card: 150 20% 10%;
+    --card-foreground: 150 20% 95%;
+    --popover: 150 20% 10%;
+    --popover-foreground: 150 20% 95%;
+    --primary: 142 76% 46%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 38 80% 45%;
+    --secondary-foreground: 38 80% 98%;
+    --muted: 150 15% 15%;
+    --muted-foreground: 150 10% 55%;
+    --accent: 150 25% 18%;
+    --accent-foreground: 142 76% 70%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 150 15% 20%;
+    --input: 150 15% 20%;
+    --ring: 142 76% 46%;
+    --sidebar-background: 150 30% 8%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground font-semibold rounded-xl px-6 py-3 transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98];
+    box-shadow: var(--shadow-primary);
+  }
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground font-semibold rounded-xl px-6 py-3 transition-all duration-200 hover:opacity-90;
+  }
+  .btn-outline {
+    @apply border-2 border-primary text-primary font-semibold rounded-xl px-6 py-3 transition-all duration-200 hover:bg-primary hover:text-primary-foreground;
+  }
+  .card-product {
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+    @apply rounded-2xl border border-border overflow-hidden transition-all duration-300 hover:-translate-y-1;
+  }
+  .card-product:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .badge-urgent {
+    background: var(--gradient-badge-urgent);
+    @apply text-white text-xs font-bold px-2.5 py-1 rounded-full;
+  }
+  .badge-moderate {
+    background: var(--gradient-badge-moderate);
+    @apply text-white text-xs font-bold px-2.5 py-1 rounded-full;
+  }
+  .badge-safe {
+    background: var(--gradient-badge-safe);
+    @apply text-white text-xs font-bold px-2.5 py-1 rounded-full;
+  }
+  .nav-link {
+    @apply text-foreground/70 hover:text-primary font-medium transition-colors duration-200;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    @apply text-3xl font-bold text-foreground;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-input bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+  }
+  .stat-card {
+    @apply bg-card rounded-2xl p-6 border border-border shadow-sm;
+  }
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200 cursor-pointer font-medium;
+  }
+  .sidebar-item.active {
+    @apply bg-sidebar-accent text-sidebar-primary font-semibold;
+  }
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  .animate-pulse-green {
+    animation: pulse-green 2s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(142 76% 36% / 0.4); }
+  50% { box-shadow: 0 0 0 12px hsl(142 76% 36% / 0); }
+}
