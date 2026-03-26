@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Bell, Settings, Leaf,
   ShieldCheck, CheckCircle, XCircle, Eye, TrendingUp, DollarSign, AlertTriangle
 } from 'lucide-react';
-import { sellers, products, orders, adminStats } from '@/data/mockData';
+import { products, orders, adminStats } from '@/data/mockData';
 
 type Tab = 'dashboard' | 'sellers' | 'products' | 'orders' | 'analytics';
 
@@ -20,17 +20,53 @@ const statusColors: Record<string, string> = {
 
 const AdminDashboard = () => {
   const [tab, setTab] = useState<Tab>('dashboard');
-  const [sellerData, setSellerData] = useState(sellers);
+  const [sellerData, setSellerData] = useState([]);
+  const [stats, setStats] = useState(adminStats);
 
-  const stats = [
-    { label: 'Total Users', value: adminStats.totalUsers.toLocaleString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Total Sellers', value: adminStats.totalSellers, icon: ShieldCheck, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Total Orders', value: adminStats.totalOrders.toLocaleString(), icon: ShoppingBag, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Total Revenue', value: `₹${(adminStats.totalRevenue / 100000).toFixed(1)}L`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Pending Sellers', value: adminStats.pendingSellers, icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: 'Active Products', value: adminStats.activeProducts.toLocaleString(), icon: Package, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-    { label: 'Waste Saved (kg)', value: adminStats.wasteSaved.toLocaleString(), icon: Leaf, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Avg Discount', value: `${adminStats.avgDiscount}%`, icon: TrendingUp, color: 'text-rose-600', bg: 'bg-rose-50' },
+  useEffect(() => {
+    const fetchSellers = async () => {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/sellers', {
+          headers: { Authorization: token }
+        });
+        const data = await res.json();
+        setSellerData(data);
+      } catch (err) {
+        console.error('Error fetching sellers:', err);
+      }
+    };
+
+    const fetchStats = async () => {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/admin-stats', {
+          headers: { Authorization: token }
+        });
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    };
+
+    fetchSellers();
+    fetchStats();
+  }, []);
+
+  const statsDisplay = [
+    { label: 'Total Users', value: stats.totalUsers?.toLocaleString() || '0', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Total Sellers', value: stats.totalSellers || '0', icon: ShieldCheck, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Total Orders', value: stats.totalOrders?.toLocaleString() || '0', icon: ShoppingBag, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Total Revenue', value: `₹${(stats.totalRevenue / 100000).toFixed(1)}L` || '₹0L', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Pending Sellers', value: stats.pendingSellers || '0', icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Active Products', value: stats.activeProducts?.toLocaleString() || '0', icon: Package, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    { label: 'Waste Saved (kg)', value: stats.wasteSaved?.toLocaleString() || '0', icon: Leaf, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Avg Discount', value: `${stats.avgDiscount}%` || '0%', icon: TrendingUp, color: 'text-rose-600', bg: 'bg-rose-50' },
   ];
 
   const nav = [
@@ -41,8 +77,35 @@ const AdminDashboard = () => {
     { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3 },
   ];
 
-  const approveSeller = (id: string) => setSellerData(prev => prev.map(s => s.id === id ? { ...s, status: 'approved' as const } : s));
-  const rejectSeller = (id: string) => setSellerData(prev => prev.map(s => s.id === id ? { ...s, status: 'rejected' as const } : s));
+  const approveSeller = async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    try {
+      await fetch(`http://localhost:5000/api/auth/approve-seller/${id}`, {
+        method: 'PUT',
+        headers: { Authorization: token }
+      });
+      setSellerData(prev => prev.map(s => s._id === id ? { ...s, status: 'approved' } : s));
+    } catch (err) {
+      console.error('Error approving seller:', err);
+    }
+  };
+
+  const rejectSeller = async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    try {
+      await fetch(`http://localhost:5000/api/auth/reject-seller/${id}`, {
+        method: 'PUT',
+        headers: { Authorization: token }
+      });
+      setSellerData(prev => prev.map(s => s._id === id ? { ...s, status: 'rejected' } : s));
+    } catch (err) {
+      console.error('Error rejecting seller:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -98,10 +161,10 @@ const AdminDashboard = () => {
               </h1>
               <p className="text-muted-foreground text-sm mt-1">ExpireEx Super Admin Panel</p>
             </div>
-            {adminStats.pendingSellers > 0 && (
+            {stats.pendingSellers > 0 && (
               <div className="flex items-center gap-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl px-4 py-2 text-sm">
                 <AlertTriangle className="w-4 h-4" />
-                {adminStats.pendingSellers} sellers pending approval
+                {stats.pendingSellers} sellers pending approval
               </div>
             )}
           </div>
@@ -119,7 +182,7 @@ const AdminDashboard = () => {
           {tab === 'dashboard' && (
             <div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {stats.map(({ label, value, icon: Icon, color, bg }) => (
+                {statsDisplay.map(({ label, value, icon: Icon, color, bg }) => (
                   <div key={label} className="stat-card">
                     <div className={`w-11 h-11 ${bg} rounded-xl flex items-center justify-center mb-3`}>
                       <Icon className={`w-5 h-5 ${color}`} />
@@ -137,20 +200,20 @@ const AdminDashboard = () => {
                 </h3>
                 <div className="space-y-3">
                   {sellerData.filter(s => s.status === 'pending').map(s => (
-                    <div key={s.id} className="flex items-center justify-between p-4 bg-orange-50/50 border border-orange-100 rounded-xl">
+                    <div key={s._id} className="flex items-center justify-between p-4 bg-orange-50/50 border border-orange-100 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">{s.avatar}</div>
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">{s.name?.[0]}</div>
                         <div>
                           <div className="font-medium text-foreground text-sm">{s.name}</div>
                           <div className="text-xs text-muted-foreground">{s.shopName} • {s.email}</div>
-                          <div className="text-xs text-muted-foreground">Applied: {s.joinDate}</div>
+                          <div className="text-xs text-muted-foreground">Applied: {new Date(s.createdAt || Date.now()).toLocaleDateString()}</div>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => approveSeller(s.id)} className="flex items-center gap-1 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity">
+                        <button onClick={() => approveSeller(s._id)} className="flex items-center gap-1 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity">
                           <CheckCircle className="w-3.5 h-3.5" /> Approve
                         </button>
-                        <button onClick={() => rejectSeller(s.id)} className="flex items-center gap-1 bg-destructive text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity">
+                        <button onClick={() => rejectSeller(s._id)} className="flex items-center gap-1 bg-destructive text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity">
                           <XCircle className="w-3.5 h-3.5" /> Reject
                         </button>
                       </div>
@@ -211,10 +274,10 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {sellerData.map(s => (
-                      <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                      <tr key={s._id} className="hover:bg-muted/30 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs">{s.avatar}</div>
+                            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs">{s.name?.[0]}</div>
                             <div>
                               <div className="font-medium text-foreground">{s.name}</div>
                               <div className="text-xs text-muted-foreground">{s.email}</div>
@@ -225,15 +288,15 @@ const AdminDashboard = () => {
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[s.status] || 'bg-muted text-muted-foreground'}`}>{s.status}</span>
                         </td>
-                        <td className="px-6 py-4">{s.products}</td>
-                        <td className="px-6 py-4 font-semibold text-primary">₹{s.revenue.toLocaleString()}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{s.joinDate}</td>
+                        <td className="px-6 py-4">0</td>
+                        <td className="px-6 py-4 font-semibold text-primary">₹0</td>
+                        <td className="px-6 py-4 text-muted-foreground">{new Date(s.createdAt || Date.now()).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             {s.status === 'pending' && (
                               <>
-                                <button onClick={() => approveSeller(s.id)} className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-lg font-medium hover:opacity-90">Approve</button>
-                                <button onClick={() => rejectSeller(s.id)} className="bg-destructive text-white text-xs px-2 py-1 rounded-lg font-medium hover:opacity-90">Reject</button>
+                                <button onClick={() => approveSeller(s._id)} className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-lg font-medium hover:opacity-90">Approve</button>
+                                <button onClick={() => rejectSeller(s._id)} className="bg-destructive text-white text-xs px-2 py-1 rounded-lg font-medium hover:opacity-90">Reject</button>
                               </>
                             )}
                             <button className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors">
@@ -384,7 +447,7 @@ const AdminDashboard = () => {
               <div className="md:col-span-2 bg-card rounded-2xl border border-border p-6">
                 <h3 className="font-display font-semibold text-foreground mb-4">Top Performing Sellers</h3>
                 <div className="space-y-3">
-                  {sellers.filter(s => s.status === 'approved').map((s, i) => (
+                  {sellerData.filter(s => s.status === 'approved').map((s, i) => (
                     <div key={s.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors">
                       <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">#{i + 1}</div>
                       <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">{s.avatar}</div>

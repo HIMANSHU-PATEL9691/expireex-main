@@ -1,7 +1,5 @@
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 
 const Cart = () => {
@@ -13,8 +11,7 @@ const Cart = () => {
   const grandTotal = totalPrice + deliveryFee;
 
   if (items.length === 0) return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       <div className="flex flex-col items-center justify-center py-32">
         <ShoppingBag className="w-20 h-20 text-muted-foreground/30 mb-6" />
         <h2 className="text-2xl font-display font-bold text-foreground mb-2">Your Cart is Empty</h2>
@@ -23,13 +20,11 @@ const Cart = () => {
           Browse Products <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
-      <Footer />
-    </div>
+    </>
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-display font-bold text-foreground mb-8">Shopping Cart ({totalItems} items)</h1>
 
@@ -109,8 +104,7 @@ const Cart = () => {
           </div>
         </div>
       </div>
-      <Footer />
-    </div>
+    </>
   );
 };
 

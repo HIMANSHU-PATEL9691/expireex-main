@@ -2,6 +2,7 @@ export type Category = 'Food' | 'Cosmetics' | 'Medicine' | 'Beverages' | 'Dairy'
 export type UrgencyLevel = 'urgent' | 'moderate' | 'safe';
 
 export interface Product {
+  _id: string;
   id: string;
   name: string;
   category: Category;
@@ -56,6 +57,7 @@ export const categoryConfig: Record<Category, { icon: string; color: string; bg:
 
 export const products: Product[] = [
   {
+    _id: 'p1',
     id: 'p1',
     name: 'Organic Mixed Berry Yogurt Pack',
     category: 'Dairy',
@@ -74,6 +76,7 @@ export const products: Product[] = [
     reviews: 128,
   },
   {
+    _id: 'p2',
     id: 'p2',
     name: 'Vitamin C Serum 30ml',
     category: 'Cosmetics',
@@ -92,6 +95,7 @@ export const products: Product[] = [
     reviews: 256,
   },
   {
+    _id: 'p3',
     id: 'p3',
     name: 'Multivitamin Tablets (90 Count)',
     category: 'Medicine',
@@ -110,6 +114,7 @@ export const products: Product[] = [
     reviews: 89,
   },
   {
+    _id: 'p4',
     id: 'p4',
     name: 'Mango Juice 1L Pack (6pcs)',
     category: 'Beverages',
@@ -128,6 +133,7 @@ export const products: Product[] = [
     reviews: 342,
   },
   {
+    _id: 'p5',
     id: 'p5',
     name: 'Almond Butter 400g',
     category: 'Food',
@@ -146,6 +152,7 @@ export const products: Product[] = [
     reviews: 175,
   },
   {
+    _id: 'p6',
     id: 'p6',
     name: 'Cheese Puffs Variety Pack',
     category: 'Snacks',
@@ -164,6 +171,7 @@ export const products: Product[] = [
     reviews: 67,
   },
   {
+    _id: 'p7',
     id: 'p7',
     name: 'Moisturizing Face Cream SPF 50',
     category: 'Cosmetics',
@@ -182,6 +190,7 @@ export const products: Product[] = [
     reviews: 411,
   },
   {
+    _id: 'p8',
     id: 'p8',
     name: 'Paracetamol 500mg (Strip of 10)',
     category: 'Medicine',

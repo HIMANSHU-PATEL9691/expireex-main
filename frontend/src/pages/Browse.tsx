@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
 import { ProductCard } from '@/components/ProductCard';
-import { products, Category, categoryConfig } from '@/data/mockData';
+import { Category, categoryConfig } from '@/data/mockData';
 
 const sortOptions = [
   { value: 'discount', label: 'Highest Discount' },
@@ -43,33 +41,43 @@ const Browse = () => {
     });
   }, [selectedCat, selectedUrgency, sortBy, maxPrice, search]);
 
-  const filtered = products
-    .filter(p => {
-      if (selectedCat !== 'All' && p.category !== selectedCat) return false;
-      if (selectedUrgency !== 'all' && p.urgency !== selectedUrgency) return false;
-      if (p.discountPrice > maxPrice) return false;
-      if (
-        search &&
-        !p.name.toLowerCase().includes(search.toLowerCase()) &&
-        !p.category.toLowerCase().includes(search.toLowerCase())
-      ) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'discount': return b.discountPercent - a.discountPercent;
-        case 'price-low': return a.discountPrice - b.discountPrice;
-        case 'price-high': return b.discountPrice - a.discountPrice;
-        case 'expiry': return a.daysLeft - b.daysLeft;
-        case 'rating': return b.rating - a.rating;
-        default: return 0;
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [selectedCat, selectedUrgency, sortBy, maxPrice, search, page]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        category: selectedCat === 'All' ? '' : selectedCat,
+        urgency: selectedUrgency === 'all' ? '' : selectedUrgency,
+        page: page.toString(),
+        limit: '12',
+        ...(search && { search }),
+        ...(maxPrice < 1000 && { maxPrice: maxPrice.toString() })
+      });
+      const res = await fetch(`http://localhost:5000/api/products/products?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.products);
+        setTotal(data.pagination.total);
       }
-    });
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = products;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
+    <>
       {/* Header */}
       <div className="bg-muted border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -200,6 +208,36 @@ const Browse = () => {
           {/* Products */}
           <main className="flex-1">
 
+            {/* Active Filters */}
+            {(selectedCat !== 'All' || selectedUrgency !== 'all' || maxPrice < 1000) && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {selectedCat !== 'All' && (
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                    {categoryConfig[selectedCat].icon} {selectedCat}
+                    <button onClick={() => setSelectedCat('All')} className="ml-1 hover:bg-primary/20 rounded-full p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {selectedUrgency !== 'all' && (
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                    {urgencyLabels[selectedUrgency]}
+                    <button onClick={() => setSelectedUrgency('all')} className="ml-1 hover:bg-primary/20 rounded-full p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {maxPrice < 1000 && (
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                    Max ₹{maxPrice}
+                    <button onClick={() => setMaxPrice(1000)} className="ml-1 hover:bg-primary/20 rounded-full p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-between mb-6">
               <p>
                 <b>{filtered.length}</b> products found
@@ -225,16 +263,14 @@ const Browse = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filtered.map(p => (
-                  <ProductCard key={p.id} product={p} />
+                  <ProductCard key={p._id || p.id} product={p} />
                 ))}
               </div>
             )}
           </main>
         </div>
       </div>
-
-      <Footer />
-    </div>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Leaf, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,8 +9,18 @@ const Auth = () => {
 
   const [name, setName] = useState('');
   const [shopName, setShopName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [shopType, setShopType] = useState('');
+  const [licenseNo, setLicenseNo] = useState('');
+  const [yearsExperience, setYearsExperience] = useState('');
+  const [businessDescription, setBusinessDescription] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'warning' | 'error' | ''>('');
 
   const navigate = useNavigate();
 
@@ -26,8 +36,19 @@ const Auth = () => {
       email,
       password,
       role,
-      shopName
+      shopName,
+      ...(role === 'seller' && {
+        phone,
+        address,
+        city,
+        pincode,
+        shopType,
+        licenseNo,
+        yearsExperience,
+        businessDescription
+      })
     };
+
 
     console.log("📤 Payload:", payload);
 
@@ -62,20 +83,46 @@ const Auth = () => {
         console.log("✅ Login Success");
 
         localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user.role);
+        localStorage.setItem("user", JSON.stringify(data.user));
         console.log("🔐 Token saved");
 
-        if (data.user.role === "seller") {
-          console.log("➡️ Redirecting to Seller Dashboard");
-          navigate("/seller/dashboard");
+        // Check if there's a warning (seller not approved)
+        if (data.warning) {
+          setStatusMessage(data.warning);
+          setMessageType('warning');
+          console.log("⚠️ Warning:", data.warning);
+          // Show warning but still redirect
+          setTimeout(() => {
+            if (data.user.role === "seller") {
+              console.log("➡️ Redirecting to Seller Dashboard");
+              navigate("/seller/dashboard");
+            } else {
+              console.log("➡️ Redirecting to Browse Page");
+              navigate("/browse");
+            }
+          }, 2000);
         } else {
-          console.log("➡️ Redirecting to Browse Page");
-          navigate("/browse");
+          if (data.user.role === "seller") {
+            console.log("➡️ Redirecting to Seller Dashboard");
+            navigate("/seller/dashboard");
+          } else {
+            console.log("➡️ Redirecting to Browse Page");
+            navigate("/browse");
+          }
         }
 
       } else {
         console.log("✅ Signup Success");
-        alert("Signup successful");
-        setIsLogin(true);
+        setStatusMessage("Signup successful! Please login to continue.");
+        setMessageType('success');
+        localStorage.setItem("role", role);
+        
+        setTimeout(() => {
+          setIsLogin(true);
+        setStatusMessage('');
+        setMessageType(''); 
+        }, 2000);
       }
 
     } catch (err) {
@@ -125,6 +172,28 @@ const Auth = () => {
             {isLogin ? 'Login to continue' : 'Create your account'}
           </p>
 
+          {/* STATUS MESSAGE */}
+          {statusMessage && (
+            <div className={`p-4 rounded-lg mb-6 flex items-start gap-3 ${
+              messageType === 'warning' ? 'bg-orange-50 border border-orange-200' :
+              messageType === 'success' ? 'bg-green-50 border border-green-200' :
+              'bg-red-50 border border-red-200'
+            }`}>
+              <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                messageType === 'warning' ? 'text-orange-600' :
+                messageType === 'success' ? 'text-green-600' :
+                'text-red-600'
+              }`} />
+              <p className={`text-sm ${
+                messageType === 'warning' ? 'text-orange-800' :
+                messageType === 'success' ? 'text-green-800' :
+                'text-red-800'
+              }`}>
+                {statusMessage}
+              </p>
+            </div>
+          )}
+
           {/* ROLE TOGGLE */}
           {!isLogin && (
             <div className="flex rounded-xl border p-1 mb-6 bg-muted">
@@ -161,27 +230,101 @@ const Auth = () => {
             )}
 
             {!isLogin && role === 'seller' && (
-              <input
-                className="input-field"
-                placeholder="Shop Name"
-                value={shopName}
-                onChange={(e) => {
-                  setShopName(e.target.value);
-                  console.log("🏪 Shop Name:", e.target.value);
-                }}
-              />
+              <>
+                <input
+                  className="input-field"
+                  placeholder="Shop Name *"
+                  value={shopName}
+                  required
+                  onChange={(e) => {
+                    setShopName(e.target.value);
+                    console.log("🏪 Shop Name:", e.target.value);
+                  }}
+                />
+                <input
+                  className="input-field"
+                  placeholder="Phone Number *"
+                  value={phone}
+                  type="tel"
+                  required
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                <input
+                  className="input-field"
+                  placeholder="Shop Address *"
+                  value={address}
+                  required
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    className="input-field"
+                    placeholder="City *"
+                    value={city}
+                    required
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                  <input
+                    className="input-field"
+                    placeholder="Pincode *"
+                    value={pincode}
+                    type="number"
+                    required
+                    onChange={(e) => setPincode(e.target.value)}
+                  />
+                </div>
+                <select 
+                  className="input-field" 
+                  value={shopType}
+                  required
+                  onChange={(e) => setShopType(e.target.value)}
+                >
+                  <option value="">Select Shop Type *</option>
+                  <option value="grocery">Grocery</option>
+                  <option value="pharmacy">Pharmacy</option>
+                  <option value="dairy">Dairy</option>
+                  <option value="bakery">Bakery</option>
+                  <option value="cosmetics">Cosmetics</option>
+                  <option value="other">Other</option>
+                </select>
+                <input
+                  className="input-field"
+                  placeholder="Business License No *"
+                  value={licenseNo}
+                  required
+                  onChange={(e) => setLicenseNo(e.target.value)}
+                />
+                <input
+                  className="input-field"
+                  placeholder="Years in Business *"
+                  value={yearsExperience}
+                  type="number"
+                  min="0"
+                  required
+                  onChange={(e) => setYearsExperience(e.target.value)}
+                />
+                <textarea
+                  className="input-field"
+                  placeholder="Business Description *"
+                  value={businessDescription}
+                  rows={3}
+                  required
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                />
+              </>
             )}
 
             <input
               className="input-field"
               type="email"
-              placeholder="Email"
+              placeholder="Email *"
               value={email}
+              required={!isLogin}
               onChange={(e) => {
                 setEmail(e.target.value);
                 console.log("📧 Email:", e.target.value);
               }}
-            />
+            /> 
 
             <div className="relative">
               <input
@@ -230,7 +373,7 @@ const Auth = () => {
           </p>
 
           <p className="text-center mt-4 text-sm">
-            <Link to="/admin">Admin Login →</Link>
+            <Link to="/admin-login">Admin Login →</Link>
           </p>
 
         </div>

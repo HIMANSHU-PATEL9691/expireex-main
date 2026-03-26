@@ -39,13 +39,15 @@ const AdminLogin = () => {
 
       console.log("✅ Admin Login Success");
 
-      // Save admin session
+      // Save admin token
+      localStorage.setItem("adminToken", data.token);
       localStorage.setItem("admin", "true");
+      localStorage.setItem("role", "admin");
 
-      console.log("🔐 Admin stored in localStorage");
+      console.log("🔐 Admin token stored in localStorage");
 
       // Redirect
-      navigate("/admin/dashboard");
+      navigate("/admin");
 
     } catch (err) {
       console.error("🔥 Server Error:", err);

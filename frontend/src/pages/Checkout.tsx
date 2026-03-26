@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, CreditCard, Smartphone, Wallet, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Navbar } from '@/components/Navbar';
 import { useCart } from '@/context/CartContext';
 
 const steps = ['Delivery', 'Payment', 'Review'];
@@ -14,6 +13,14 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const role = localStorage.getItem('role');
+    if (role !== 'customer') {
+      alert('Please log in as a customer to place an order.');
+      navigate('/auth');
+    }
+  }, [navigate]);
+
   const deliveryFee = totalPrice > 499 ? 0 : 49;
   const grandTotal = totalPrice + deliveryFee;
 
@@ -23,8 +30,7 @@ const Checkout = () => {
   };
 
   if (ordered) return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       <div className="flex flex-col items-center justify-center py-32 px-4 text-center">
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 animate-pulse-green">
           <CheckCircle className="w-10 h-10 text-primary" />
@@ -37,12 +43,11 @@ const Checkout = () => {
           <Link to="/" className="btn-outline">Back to Home</Link>
         </div>
       </div>
-    </div>
+    </>
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 text-sm group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back
@@ -200,7 +205,7 @@ const Checkout = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

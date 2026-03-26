@@ -1,19 +1,58 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, ShoppingCart, Zap, Shield, Truck, Clock, Package } from 'lucide-react';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Star, ShoppingCart, Zap, Shield, Truck, Clock, Package, Heart } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
-import { products, categoryConfig } from '@/data/mockData';
+import { categoryConfig } from '@/data/mockData';
 import { useCart } from '@/context/CartContext';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const product = products.find(p => p.id === id);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [related, setRelated] = useState([]);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  
+  const role = localStorage.getItem('role');
+  const isCustomerOrGuest = role === 'customer' || !role;
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
+
+  const fetchProduct = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/products/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const pData = data.product || data;
+        setProduct(pData);
+        
+        // Fetch related
+        const relRes = await fetch(`http://localhost:5000/api/products/products?category=${pData.category}&limit=4`);
+        if (relRes.ok) {
+          const relData = await relRes.json();
+          setRelated(relData.products || []);
+        }
+
+        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        setIsWishlisted(wishlist.some((p: any) => (p._id || p.id) === (pData._id || pData.id)));
+      }
+    } catch (err) {
+      console.error('Error fetching product:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   if (!product) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex items-center justify-center">
       <div className="text-center">
         <p className="text-2xl mb-4">Product not found</p>
         <button onClick={() => navigate('/browse')} className="btn-primary">Back to Browse</button>
@@ -21,19 +60,31 @@ const ProductDetail = () => {
     </div>
   );
 
-  const cfg = categoryConfig[product.category];
-  const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const toggleWishlist = () => {
+    if (!isCustomerOrGuest) return;
+    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    const id = product._id || product.id;
+    let newWishlist;
+    if (isWishlisted) {
+      newWishlist = wishlist.filter((p: any) => (p._id || p.id) !== id);
+    } else {
+      newWishlist = [...wishlist, product];
+    }
+    localStorage.setItem('wishlist', JSON.stringify(newWishlist));
+    setIsWishlisted(!isWishlisted);
+  };
+
   const savings = product.originalPrice - product.discountPrice;
+  const cfg = categoryConfig[product.category as keyof typeof categoryConfig] || { bg: 'bg-muted', color: 'text-foreground', icon: '📦' };
 
   const urgencyBanner = {
     urgent: { text: `⚠️ Only ${product.daysLeft} days left! Grab this deal now.`, cls: 'bg-danger-light border-danger/30 text-danger' },
     moderate: { text: `🟡 ${product.daysLeft} days to expiry. Don't miss this discount.`, cls: 'bg-secondary-light border-secondary/30 text-secondary-foreground' },
     safe: { text: `🟢 ${product.daysLeft} days to expiry. Plenty of time to enjoy!`, cls: 'bg-accent border-accent-foreground/20 text-accent-foreground' },
-  }[product.urgency];
+  }[product.urgency as keyof typeof urgencyBanner] || { text: `🟢 ${product.daysLeft || 0} days to expiry. Plenty of time to enjoy!`, cls: 'bg-accent border-accent-foreground/20 text-accent-foreground' };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group">
@@ -59,7 +110,17 @@ const ProductDetail = () => {
               <span>{cfg.icon}</span><span>{product.category}</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-3">{product.name}</h1>
+            <div className="flex justify-between items-start mb-3 gap-4">
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">{product.name}</h1>
+              {isCustomerOrGuest && (
+                <button 
+                  onClick={toggleWishlist} 
+                  className="p-2.5 sm:p-3 bg-muted/50 rounded-full hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors flex-shrink-0"
+                >
+                  <Heart className={`w-5 h-5 sm:w-6 sm:h-6 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+                </button>
+              )}
+            </div>
 
             {/* Rating */}
             <div className="flex items-center gap-3 mb-4">
@@ -108,14 +169,20 @@ const ProductDetail = () => {
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">{product.description}</p>
 
             {/* Actions */}
-            <div className="flex gap-3">
-              <button className="flex-1 btn-primary flex items-center justify-center gap-2" onClick={() => { addToCart(product); navigate('/cart'); }}>
-                <ShoppingCart className="w-5 h-5" /> Add to Cart
-              </button>
-              <button className="flex-1 btn-secondary flex items-center justify-center gap-2" onClick={() => { addToCart(product); navigate('/checkout'); }}>
-                <Zap className="w-5 h-5" /> Buy Now
-              </button>
-            </div>
+            {isCustomerOrGuest ? (
+              <div className="flex gap-3">
+                <button className="flex-1 btn-primary flex items-center justify-center gap-2" onClick={() => { addToCart(product); navigate('/cart'); }}>
+                  <ShoppingCart className="w-5 h-5" /> Add to Cart
+                </button>
+                <button className="flex-1 btn-secondary flex items-center justify-center gap-2" onClick={() => { addToCart(product); navigate('/checkout'); }}>
+                  <Zap className="w-5 h-5" /> Buy Now
+                </button>
+              </div>
+            ) : (
+              <div className="bg-muted text-muted-foreground p-4 rounded-xl text-center text-sm font-medium">
+                Buying is restricted to customers only.
+              </div>
+            )}
 
             {/* Trust Badges */}
             <div className="flex gap-4 mt-6 pt-6 border-t border-border">
@@ -137,13 +204,12 @@ const ProductDetail = () => {
           <div className="mt-16">
             <h2 className="section-title mb-8">Related Products</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {related.map(p => <ProductCard key={p.id} product={p} />)}
+              {related.map(p => <ProductCard key={p._id || p.id} product={p} />)}
             </div>
           </div>
         )}
       </div>
-      <Footer />
-    </div>
+    </>
   );
 };
 
